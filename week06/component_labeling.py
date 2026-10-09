@@ -53,7 +53,7 @@ def count_components(g: list[list[int]]) -> int:
 
 def label_components(g: list[list[int]]) -> list[int]:
     component_id: int = 0
-    labeled: list[int] = [-1] * len[g] # following the structure of count_components
+    labeled: list[int] = [-1] * len(g) # following the structure of count_components
     # try every vertex as a starting point and keep track of everything that's
     # been parsed through. Record the current label into the list to be returned
     # which would be labels[v] and then move on to the next vertex
@@ -68,3 +68,15 @@ def label_components(g: list[list[int]]) -> list[int]:
             # once id is used, we can move on to the next id
             component_id += 1
     return labeled
+
+
+g = [     # grabbed the graph from graphs.ipynb
+    [0, 1, 1, 0, 0, 0], # neighbors of vertex 0
+    [1, 0, 0, 0, 0, 0], # neighbors of vertex 1
+    [1, 0, 0, 0, 0, 0], # neighbors of vertex 2
+    [0, 0, 0, 0, 1, 0], # neighbors of vertex 3
+    [0, 0, 0, 1, 0, 0], # neighbors of vertex 4
+    [0, 0, 0, 0, 0, 0], # neighbors of vertex 5
+]
+
+print(label_components(g)) # shows the labels assigned for testing if it worked
