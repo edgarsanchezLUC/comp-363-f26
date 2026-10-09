@@ -52,12 +52,19 @@ def count_components(g: list[list[int]]) -> int:
 # same concept as count components except for recording the current label
 
 def label_components(g: list[list[int]]) -> list[int]:
-    components: int = 0
-    labeled: list[int] = [] # following the structure of count_components
+    component_id: int = 0
+    labeled: list[int] = [-1] * len[g] # following the structure of count_components
     # try every vertex as a starting point and keep track of everything that's
     # been parsed through. Record the current label into the list to be returned
     # which would be labels[v] and then move on to the next vertex
     for starting_vertex in range(len(g)):
-        if starting_vertex not in labeled:
-            components += 1
-            labeled.append(starting_vertex)
+        if labeled[starting_vertex] == -1: # if not labeled just yet
+            # then we need to get all reachable vertices in this component
+            members = reached(starting_vertex, g)
+            # now that we have reachable vertices, we need to assign an id
+            for v in members:
+                labeled[v] = component_id
+
+            # once id is used, we can move on to the next id
+            component_id += 1
+    return labeled
