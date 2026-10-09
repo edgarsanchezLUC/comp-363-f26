@@ -80,3 +80,9 @@ g = [     # grabbed the graph from graphs.ipynb
 ]
 
 print(label_components(g)) # shows the labels assigned for testing if it worked
+
+
+def connected(u, v, g):
+    labels = label_components(g) # make the list of labeled components
+    return labels[u] == labels[v] # simply compare if component u is the same as component v
+
