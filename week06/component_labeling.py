@@ -47,6 +47,10 @@ def count_components(g: list[list[int]]) -> int:
             marked.extend(reached(starting_vertex, g))
     return components
 
+# label components will follow count components' structure
+# to be placed on top of reached
+# same concept as count components except for recording the current label
+
 def label_components(g: list[list[int]]) -> list[int]:
     components: int = 0
     labeled: list[int] = [] # following the structure of count_components
