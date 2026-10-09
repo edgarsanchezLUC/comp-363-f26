@@ -86,3 +86,14 @@ def connected(u, v, g):
     labels = label_components(g) # make the list of labeled components
     return labels[u] == labels[v] # simply compare if component u is the same as component v
 
+def largest_component(g: list[list[int]]) -> list[int]:
+    labels = label_components(g) # need the list of labeled components
+    # go through the list to see which component is seen the most
+    largest = max(set(labels), key=labels.count)
+    return [v for v, label in enumerate(labels) if label == largest] # should return all vertices
+# in the largest component
+
+
+print(connected(0,4,g)) # testing connected
+
+print(largest_component(g)) # testing largest_component
