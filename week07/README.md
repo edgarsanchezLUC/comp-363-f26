@@ -199,6 +199,7 @@ edges, totaling 31, that you got on paper.
 ### Reading
 
 - [Class slide deck, "Minimum Spanning Tree"](https://docs.google.com/presentation/d/1SmVcYeR4VjL8KsyIBxLUBlIhau0KSclcTdi6ggdo7e4/edit?usp=sharing) — the primary walkthrough for this assignment: the input graph, the deep-copy/component-counting setup, the safe-edge algorithm above, and the six-vertex worked example this task is built on.
+- [Safe edges, edge weights, and a second worked example](mst_faq.md) — answers to student questions about this week's hand-trace, with a different five-vertex graph to practice on.
 - [Jeff Erickson, *Algorithms*, Ch. 7, "Minimum Spanning Trees" (PDF)](https://jeffe.cs.illinois.edu/teaching/algorithms/book/07-mst.pdf) — the cut property and the distinct-edge-weight uniqueness argument, both used above.
 - [Leo Irakliotis, "Borůvka at 100"](https://medium.com/@leoirakliotis/bor%C5%AFvka-at-100-146912e19ad3) — traces the full lineage from Borůvka's 1926 paper (solving a real wire-economy problem connecting towns in Moravia) through Jarník's 1930 simplification and Kruskal's and Prim's independent 1950s rediscoveries, and clears up the common misattribution of a minimum-spanning-tree algorithm to Dijkstra.
 
