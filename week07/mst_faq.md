@@ -1,6 +1,6 @@
 # Week 7 — Minimum Spanning Trees: Frequently Asked Questions
 
-Questions from students working on the Week 7 hand-trace, with answers.
+Questions from students working on the Week 7 hand-trace, with answers. This is based on the [MST notebook](./mst.ipynb).
 
 ## 1. What is a safe edge, and how do I find one between components?
 
