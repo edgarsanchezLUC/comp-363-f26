@@ -130,6 +130,61 @@ first. So your code table may differ from the one above: `L` might be `10`.
 What cannot differ is the total length of the encoded message. For
 `hello world` it is always 32 bits.
 
+### What each provided method does
+
+Everything the class `Huffman` does is built from small methods. Methods
+whose names start with two underscores (`__`) are private helpers: only
+`encode` calls them, in the order listed here. All of them read and write the
+object's own attributes (the frequency table, the forest, the root, the code
+table), which is how one step hands its result to the next.
+
+- **`Node`** is one node of the tree. A *leaf* has a symbol and a frequency
+  and no children. An internal node has no symbol, the sum of its children's
+  frequencies, and two children. `<` compares two nodes by frequency, which is
+  what lets the code ask "which of these two is smaller?"; `is_leaf()` is how
+  the code tells the two kinds of node apart.
+- **`encode(message)`** is the only method you call to build things. It first
+  rejects a message that cannot work (fewer than two distinct symbols, or
+  non-ASCII), then runs the five steps below in order and returns the encoded
+  bit string. When it finishes, the tree is still in the object, which is what
+  `decode` and `tree_size_in_bits` need.
+- **`__compute_frequencies()`** (step 1) reads the message one character at a
+  time and counts each symbol in a dictionary: add an entry the first time you
+  see a symbol, add one to it every time after. For `hello world` it ends with
+  `l` at 3, `o` at 2 and every other symbol at 1.
+- **`__initialize_forest()`** (step 2) turns every entry of that dictionary
+  into a leaf and collects the leaves in a list, the *forest*. For `hello
+  world` that is 8 one-node trees.
+- **`__remove_smallest_node()`** is the helper the merge step relies on. It
+  scans the forest for the node with the least frequency, removes it, and
+  returns it. It does not sort and does not call `min`; it simply remembers
+  the position of the smallest node seen so far. If two nodes tie, the one
+  earlier in the forest wins.
+- **`__build_huffman_tree()`** (step 3) is the greedy heart of the algorithm.
+  While the forest has more than one tree, it removes the two smallest (by
+  calling the helper twice), makes a parent with the sum of their frequencies,
+  hangs the two below it, and puts the parent back. Each pass removes two
+  trees and adds one, so it stops with a single tree, the root. For `hello
+  world` the first merge takes `h` and `e`, the first two symbols tied at 1.
+- **`__derive_codes()`** (step 4) finds the code for every symbol with a
+  depth-first walk. A stack holds nodes still to visit, each paired with the
+  string of `0`s and `1`s taken to reach it. Pop an entry: if the node is a
+  leaf, that string is the symbol's code; if not, push its left child with `0`
+  added and its right child with `1` added. When the stack is empty, every
+  leaf has been visited.
+- **`__encode_message()`** (step 5) looks up the code for each character of the
+  message, in order, and joins them into one bit string.
+- **`get_codes()`** returns a copy of the finished code table, and
+  **`get_root()`** returns the root of the tree. Use them to look at your
+  results and to hand the tree to your own code, such as the `pympler`
+  measurement below.
+
+The three methods you write sit beside these and use the same pieces:
+`decode` walks the tree that `__build_huffman_tree` built, in the opposite
+direction from `__derive_codes`; `tree_size_in_bits` visits the same nodes
+that `__derive_codes` visits; and `measure_compression` calls `encode` and
+reads the sizes off its result.
+
 ## What you write
 
 Three `TODO`s in `huffman.py`:

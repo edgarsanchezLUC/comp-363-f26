@@ -101,20 +101,28 @@ class Huffman:
         # Guard first: with a single distinct symbol the tree is one leaf, its
         # path is empty, and every code would be "". Non-ASCII symbols would
         # break the 8-bits-per-symbol accounting used in tree_size_in_bits().
+        # set(message) keeps one copy of each character, so its length is the
+        # number of distinct symbols. isascii() is True only if every character
+        # is in the ASCII range. "raise" stops the method here with an error,
+        # so nothing below runs on a bad message.
         if not message.isascii() or len(set(message)) < 2:
             raise ValueError("Message must be ASCII with at least 2 distinct symbols.")
+        # Remember the message on the object, so that the helper methods below
+        # can read it without having it passed to them one by one.
         self.__message = message
         # The five steps from the assignment, in order. Each step reads what
         # the one before it left in the object's attributes.
-        self.__compute_frequencies()
-        self.__initialize_forest()
-        self.__build_huffman_tree()
-        self.__derive_codes()
+        self.__compute_frequencies()   # fills the frequency table
+        self.__initialize_forest()     # turns the table into single-node trees
+        self.__build_huffman_tree()    # merges the forest into one tree
+        self.__derive_codes()          # walks the tree to find every code
+        # The only return in this method: the bit string for the message.
         return self.__encode_message()
 
     def get_codes(self) -> dict[str, str]:
         """A copy of the symbol -> bit string table. It is a copy so that
         changing what you get back cannot corrupt the object's own table."""
+        # dict(...) builds a new dictionary with the same entries.
         return dict(self.__varcode)
 
     def get_root(self) -> Node | None:
@@ -126,16 +134,27 @@ class Huffman:
         # ord(symbol) would be much smaller in memory, as we saw in class.
         # Start empty so a second call to encode() does not add to old counts.
         self.__frequency_table = {}
+        # Look at the message one character at a time, from first to last.
         for symbol in self.__message:
             if symbol in self.__frequency_table:
+                # We have seen this symbol before: it has an entry, so count
+                # one more occurrence of it.
                 self.__frequency_table[symbol] += 1
             else:
+                # First time we meet this symbol: create its entry, already
+                # counting this occurrence.
                 self.__frequency_table[symbol] = 1
 
     def __initialize_forest(self) -> None:
         # Step 2. One leaf per distinct symbol, holding the symbol and its count.
+        # Start with an empty forest, for the same reason as above.
         self.__forest = []
+        # .items() hands us each (symbol, count) pair of the dictionary, so we
+        # can unpack both parts in the for statement.
         for symbol, frequency in self.__frequency_table.items():
+            # A leaf: it has the symbol and the frequency, and no children.
+            # Node's constructor takes the frequency first, then the symbol.
+            # Putting the new leaf at the end of the list adds it to the forest.
             self.__forest.append(Node(frequency, symbol))
 
     def __remove_smallest_node(self) -> Node:
@@ -144,34 +163,65 @@ class Huffman:
         # list.pop(i) removes the item AT position i and returns it. (list.remove
         # takes a value, not a position, and returns nothing.) If two nodes tie,
         # the earlier one wins because < is strict; that is the tie-breaking rule.
+        # Presume the first node is the smallest, until a smaller one shows up.
         smallest_index = 0
+        # Check every other position. range(1, n) is 1, 2, ..., n-1.
         for i in range(1, len(self.__forest)):
+            # Comparing two Nodes with < calls Node.__lt__, which compares
+            # their frequencies.
             if self.__forest[i] < self.__forest[smallest_index]:
+                # Found a smaller one: from now on, compare against this one.
                 smallest_index = i
+        # Take the winner out of the forest and hand it to the caller. This is
+        # the single return of the method.
         return self.__forest.pop(smallest_index)
 
     def __build_huffman_tree(self) -> None:
         # Step 3, the greedy step. Every pass removes two trees and adds one,
         # so the forest shrinks by one and the loop ends with exactly one tree.
         while len(self.__forest) > 1:
+            # Remove the two least frequent trees. The first call removes the
+            # smallest; the second then finds the smallest of what is left,
+            # which is the second smallest overall.
             first = self.__remove_smallest_node()
             second = self.__remove_smallest_node()
             # The parent has no symbol, only the combined frequency. The two
             # removed trees are not lost: they hang below the parent.
+            # (Leaving out the symbol makes it None, which marks an internal node.)
             parent = Node(first.get_frequency() + second.get_frequency())
+            # Attach the two trees as children. The smaller one goes left.
             parent.set_left(first)
             parent.set_right(second)
+            # Put the new, bigger tree back in the forest. It may be merged
+            # again on a later pass, exactly like a leaf.
             self.__forest.append(parent)
-        # The lone survivor is the root of the whole Huffman tree.
+        # The lone survivor is the root of the whole Huffman tree. With one
+        # tree left, it is at position 0 of the list.
         self.__huffman_root = self.__forest[0]
 
     def __derive_codes(self) -> None:
-        """Depth-first traversal with a stack of (node, path so far) pairs."""
+        """Depth-first traversal with a stack of (node, path so far) pairs.
+
+        About the "# type: ignore" comments below: type checkers, such as the
+        one built into many editors, read the type hints (like `Node | None`)
+        and warn when something that might be None is used as if it were a
+        Node. Here the warning is a false alarm. The tree was built by
+        encode() before this method runs, so the root is not None, and an
+        internal node always has both children. The checker cannot see that,
+        so "# type: ignore" tells it to stay quiet on that one line. It has no
+        effect when the program runs.
+        """
         # Step 4. The stack holds work still to do. Each entry remembers where
         # a node is in the tree, as the string of turns taken from the root.
+        # Start over with an empty table, in case encode() is called again.
         self.__varcode = {}
+        # The root, with an empty path: no turns taken yet.
         stack: list[tuple[Node, str]] = [(self.__huffman_root, "")]  # type: ignore
+        # Work until nothing is left on the stack.
         while stack:
+            # pop() takes the most recently added entry, the last in, first out
+            # behavior that makes this a depth-first walk. Unpack the pair into
+            # the node and the path that leads to it.
             node, path = stack.pop()
             if node.is_leaf():
                 # Arrived at a symbol: the path taken to get here is its code.
@@ -179,6 +229,8 @@ class Huffman:
             else:
                 # An internal node always has two children. Push both, each
                 # with the path extended by the turn that leads to it.
+                # Gluing "0" or "1" to the end of the path string records
+                # the turn, since the path is read from the root downward.
                 stack.append((node.get_left(), path + self._LEFT))  # type: ignore
                 stack.append((node.get_right(), path + self._RIGHT))  # type: ignore
 
@@ -187,8 +239,12 @@ class Huffman:
         # and joined once at the end: adding to a string one piece at a time
         # copies it again and again, which is painfully slow on a book.
         pieces: list[str] = []
+        # Go through the message in order, so the codes come out in order.
         for symbol in self.__message:
+            # The table gives this symbol's code, a string like "01".
             pieces.append(self.__varcode[symbol])
+        # "".join glues all the pieces together with nothing in between,
+        # producing the final bit string.
         return "".join(pieces)
 
     # ---- TODO -----------------------------------------------------------
@@ -262,4 +318,4 @@ if __name__ == "__main__":
     print(measure_compression("hello world"))
 
     # Your own experiments go here: read a plain-text book from Project
-    # Gutenberg, keep only its ASCII characters, and call measure_compression.
+    # Gutenberg, compress it, and call measure_compression.
