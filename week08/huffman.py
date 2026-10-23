@@ -264,7 +264,7 @@ class Huffman:
         #  - Guard first: if there is no tree, raise ValueError. Do not
         #    return from inside the loop; set one result and return it once.
         if self.__huffman_root is None:
-            return ValueError(self._NO_TREE_ERROR)
+            raise ValueError(self._NO_TREE_ERROR)
         result: list[str] = []
         #  - Keep a "cursor" node, starting at the root.
         cursor = self.__huffman_root
@@ -306,7 +306,30 @@ class Huffman:
         #  - Visit every node once. Add 1 for each, and 8 more when the node
         #    is a leaf. For a tree with n leaves, how many nodes are there in
         #    total? Use that to check your answer.
-        pass
+        if self.__huffman_root is None:
+            raise ValueError(self._NO_TREE_ERROR)
+
+        # need similar structure to __derive_codes, but only Nodes, no str
+        total_bits: int = 0
+        stack: list[Node] = [self.__huffman_root]
+
+        # while in the stack
+        while stack:
+            # pop current for the current node
+            node = stack.pop()
+            # increase total bits
+            total_bits += 1
+            # if node is a leaf, we add 8 more
+            if node.is_leaf():
+                total_bits += 8
+            # if not, we take it as a parent node so we move on to it's next available node
+            # by adding the left and right child to the stack
+            else:
+                stack.append(node.get_left())
+                stack.append(node.get_right())
+        # we keep going until there's no more
+        # and we return the total number of bits
+        return total_bits
 
 
 def measure_compression(message: str) -> dict[str, int]:
@@ -320,10 +343,29 @@ def measure_compression(message: str) -> dict[str, int]:
     # Hints:
     #  - Build a Huffman object and encode the message with it; the length
     #    of the bit string it returns is message_bits.
+
+    # initialize self
+    huff = Huffman()
+
+    # use what we already have to start message encode
+    encoded = huff.encode(message)
+    # ascii bits are the num of chars in the original message times Eight
     #  - ASCII costs 8 bits for every character of the message, repeats
     #    included.
+    ascii_bits = len(message) * 8
+    # message_bits are the # of chars in the encoded message
+    message_bits = len(encoded)
+    tree_bits = huff.tree_size_in_bits()
+    total_bits = message_bits + tree_bits
+
     #  - Fill in a result dictionary and return it once, at the end.
-    pass
+    results = {
+        "ascii_bits": ascii_bits,
+        "message_bits": message_bits,
+        "tree_bits": tree_bits,
+        "total_bits": total_bits,
+    }
+    return results
 
 
 if __name__ == "__main__":
@@ -336,3 +378,6 @@ if __name__ == "__main__":
 
     # Your own experiments go here: read a plain-text book from Project
     # Gutenberg, compress it, and call measure_compression.
+
+
+
