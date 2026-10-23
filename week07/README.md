@@ -146,12 +146,16 @@ components, no edges in $T$) to finish (one component):
 ### A note on ties
 
 Several edge weights repeat in this graph (5, 10, and 20 each appear
-more than once), but none of them ever tie as the cheapest edge
-crossing the *same* cut during a correct trace — so you shouldn't hit a
-forced tie-break if your safe-edge choices are actually the cheapest
-available at each step. If your own trace does turn up a genuine tie
-(two edges equally cheap across the exact same cut), either is safe to
-add; say so and note which one you picked.
+more than once), and depending on the order you pick components, you
+will run into genuine ties: for example, once {0, 1, 3, 4} has merged,
+1–5 (10) and 2–3 (10) are equally cheap across the same cut. When two
+edges are equally cheap across the exact same cut, either is safe to
+add; say so and note which one you picked. Ties matter again when you
+write the code: if every component picks its edge in the same round,
+two components can pick *different* equal-weight edges that together
+close a cycle, so your code needs a consistent way of breaking ties (or
+a check that an edge's two ends are still in different components
+before you add it).
 
 ### Then: implement Borůvka's algorithm yourself
 
