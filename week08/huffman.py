@@ -263,16 +263,33 @@ class Huffman:
         # Hints:
         #  - Guard first: if there is no tree, raise ValueError. Do not
         #    return from inside the loop; set one result and return it once.
-        #  - Keep a "cursor" node, starting at the root. A 0 bit moves it to
+        if self.__huffman_root is None:
+            return ValueError(self._NO_TREE_ERROR)
+        result: list[str] = []
+        #  - Keep a "cursor" node, starting at the root.
+        cursor = self.__huffman_root
+        #    A 0 bit moves it to
         #    its left child, a 1 bit to its right child (compare each bit with
         #    self._LEFT instead of typing "0", so the constants stay the only
         #    place the convention lives).
+        for bit in encoded_message:
+            if bit == self._LEFT:
+                cursor = cursor.get_left()
+            elif bit == self._RIGHT:
+                cursor = cursor.get_right()
+            else:
+                raise ValueError(f"Invalid bit in encoded message: {bit}")
+
         #  - After every step ask whether the cursor is a leaf. If it is, its
         #    symbol is the next character of the message; then reset the
         #    cursor to the root. If it is not, keep reading bits.
+            if cursor.is_leaf():
+                result.append(cursor.get_symbol)
+                cursor = self.__huffman_root
         #  - Never look ahead: the code is prefix-free, so the first leaf you
         #    reach is the symbol.
-        pass
+        message = "".join(result)
+        return message
 
     def tree_size_in_bits(self) -> int:
         """Returns the number of bits needed to transmit the tree, if it is
