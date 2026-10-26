@@ -284,7 +284,7 @@ class Huffman:
         #    symbol is the next character of the message; then reset the
         #    cursor to the root. If it is not, keep reading bits.
             if cursor.is_leaf():
-                result.append(cursor.get_symbol)
+                result.append(cursor.get_symbol())
                 cursor = self.__huffman_root
         #  - Never look ahead: the code is prefix-free, so the first leaf you
         #    reach is the symbol.
@@ -374,10 +374,65 @@ if __name__ == "__main__":
     huffman = Huffman()
     encoded = huffman.encode("hello world")
     print(huffman.decode(encoded) == "hello world")
-    print(measure_compression("hello world"))
+    print(measure_compression("hello world\n"))
+    try:
+        with open("Ulysses.txt", encoding="utf-8") as f:
+            raw_message = f.read()
+
+        ascii_text = raw_message.encode("ascii","ignore").decode()
+
+        metrics = measure_compression(ascii_text)
+        print("Ulysses Metrics:", metrics)
+
+        percentage = (metrics["ascii_bits"] / metrics["message_bits"]) * 100
+        print(f"Total size is {percentage:.2f}% of original ASCII size.")
+    except FileNotFoundError:
+        print("File not found.")
 
     # Your own experiments go here: read a plain-text book from Project
     # Gutenberg, compress it, and call measure_compression.
 
+"""
+1. **`hello world`.** Report all four numbers. Did Huffman encoding pay for
+    itself once the tree is counted? By how much, in bits?
+    
+"""
+ # the numbers returned are 88, 32, 79, and 111
+ # It did not pay for itself. used 32 bits on the encoded message & 79 on the tree for a total of 111
+ # bits. Comparing that to the 88 bits of the original message, it used more than the original amount
+ # of bits
+"""
+    2. **A real book.** Pick a plain-text book from
+    [Project Gutenberg](https://www.gutenberg.org/); James Joyce's *Ulysses* is
+    my favorite because it is massive. Read it with `open(..., encoding="utf-8")`
+        and keep only its ASCII characters (`text.encode("ascii", "ignore").decode()`).
+    Report the four numbers and what percentage of the ASCII size the *total*
+    is. Now compare the tree's share of that total with the `hello world` case.
+"""
 
+ # {'ascii_bits': 12254048, 'message_bits': 7059869, 'tree_bits': 829, 'total_bits': 7060698}
+ # percentage: 173.57% of the ASCII size
+ # percentage of hello world: ~76.2%
+
+"""
+3. **In between.** Try a few sentences of your own, of different lengths.
+Roughly how long does an English message have to be before the Huffman
+total beats ASCII? What would have to be true of a message for the tree to
+cost almost nothing?
+
+"""
+ #
+"""
+4. **Two ways to measure a tree.** The package
+[`pympler`](https://pympler.readthedocs.io/en/latest/) measures the memory
+an object occupies in Python: `from pympler import asizeof`, then
+`asizeof.asizeof(huffman.get_root())`. (If it is not installed, run
+`pip install pympler`, or `!pip install pympler` in a notebook cell.)
+Report that number, in bits, next to `tree_size_in_bits()` for the same
+    tree and explain in a sentence or two why they differ so much and which one
+the receiver cares about.
+5. **Ties.** When two trees tie for least frequent, does it matter which one
+you merge first? Does it change the code lengths, the encoded message's
+total length, or only which symbols get which codes? Run the experiment:
+encode a message, then the same message reversed, and compare. """
 
