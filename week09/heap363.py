@@ -184,7 +184,7 @@ def random_tier() -> int:
     # TODO
     # make tier come from a random choice of TIERS based off of TIER_WEIGHTS. give only 1
     tier = random.choices(TIERS, weights=TIER_WEIGHTS, k=1)
-    return tier
+    return tier[0]  # the issue was here, it was returning a list and not an int.
 
 
 def arrival_happens(arrival_prob: float) -> bool:
@@ -248,18 +248,18 @@ def simulate(num_doctors: int, arrival_prob: float, minutes: int,
                 treatment_time = treatment_minutes(severity)
                 doctor_free_time[i] = minute + treatment_time
 
-    # if a patient arrives successfully
-    if arrival_happens(arrival_prob):
-        # make it of a random severity level
-        tier = random_tier()
-        # increase the counter
-        stats[tier]["arrived"] += 1
-        # but if we have no room, we turn them away
-        if len(waiting_heap) >= capacity:
-            stats[tier]["turned_away"] += 1
-        # if we do, add it to the waiting heap
-        else:
-            waiting_heap.add((tier, minute))
+        # if a patient arrives successfully
+        if arrival_happens(arrival_prob):
+            # make it of a random severity level
+            tier = random_tier()
+            # increase the counter of people who arrived
+            stats[tier]["arrived"] += 1
+            # but if we have no room, we turn them away
+            if len(waiting_heap) >= capacity:
+                stats[tier]["turned_away"] += 1
+            # if we do, add it to the waiting heap
+            else:
+                waiting_heap.add((tier, minute))
 
     # once we have everything confirmed, update the stats
     current_waiting = len(waiting_heap)
