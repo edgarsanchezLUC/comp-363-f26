@@ -68,50 +68,79 @@ def simulate(num_doctors: int, arrival_prob: float, minutes: int,
     the heap as (severity, arrival_minute), or turned away if the heap
     already holds `capacity` patients; then the statistics are updated.
     """
+    # Seeding fixes the sequence of random numbers: the same seed gives the
+    # same simulated week, and None gives a different week every run.
     random.seed(seed)
+    # One counter dictionary per severity, built with a dictionary comprehension
+    # (a loop over TIERS written inside the braces). Each tier gets its own
+    # dictionary, so the counters do not mix.
     stats = {tier: {"arrived": 0, "seen": 0, "total_wait": 0,
                     "still_waiting": 0, "turned_away": 0}
              for tier in TIERS}
+    # Whole-room numbers live under their own key, next to the tiers.
     stats["room"] = {"peak_waiting": 0, "first_full_minute": None,
                      "waiting_sum": 0, "busy_sum": 0}
 
+    # The priority queue: the smallest (severity, arrival) tuple comes out first.
+    # Tuples compare element by element, so the lowest severity number wins, and
+    # among equals the earliest arrival does.
     waiting_room = MinHeap363()
     # free_at[d] is the first minute at which doctor d can take a new patient.
     free_at = [0] * num_doctors
 
+    # One pass of the loop is one simulated minute.
     for minute in range(minutes):
         # 1. Doctors: every free doctor takes the most urgent patient, if any.
         for doctor in range(num_doctors):
+            # Free means the current treatment is over; and someone must be waiting.
             if free_at[doctor] <= minute and waiting_room.size() > 0:
+                # get() returns the most urgent tuple; unpack it into its two parts.
                 severity, arrived = waiting_room.get()
+                # Count the patient as seen, and add the minutes they waited
+                # (now minus arrival) to their tier's total.
                 stats[severity]["seen"] += 1
                 stats[severity]["total_wait"] += minute - arrived
+                # The doctor is busy until the treatment ends.
                 free_at[doctor] = minute + treatment_minutes(severity)
 
         # 2. Arrival: at most one patient this minute.
         if arrival_happens(arrival_prob):
+            # Draw the new patient's severity.
             severity = random_tier()
+            # Arrivals count even if the patient is then turned away.
             stats[severity]["arrived"] += 1
             if waiting_room.size() >= capacity:
+                # Waiting room full: this patient leaves and never enters the heap.
                 stats[severity]["turned_away"] += 1
             else:
+                # The key is a tuple (severity, arrival minute), as the docstring says.
                 waiting_room.add((severity, minute))
 
         # 3. Statistics, after both the doctors and the arrival.
+        # A short name for the room's entry, to keep the lines below readable.
         room = stats["room"]
         waiting = waiting_room.size()
+        # Running sums: dividing by the number of minutes later gives averages.
         room["waiting_sum"] += waiting
+        # A doctor is busy at this minute while free_at is still in the future.
+        # The expression counts those doctors (1 for each one that is busy).
         room["busy_sum"] += sum(1 for f in free_at if f > minute)
+        # Track the highest queue length ever seen.
         if waiting > room["peak_waiting"]:
             room["peak_waiting"] = waiting
+        # Record the first minute the room reached capacity, only once (None
+        # means "has not happened yet").
         if waiting == capacity and room["first_full_minute"] is None:
             room["first_full_minute"] = minute
 
     # Patients still in the waiting room when the clock ran out.
+    # Draining the heap visits each leftover patient exactly once.
     while waiting_room.size() > 0:
+        # _ is the conventional name for a value we do not need (the arrival minute).
         severity, _ = waiting_room.get()
         stats[severity]["still_waiting"] += 1
 
+    # The single return: all the statistics, for print_report to display.
     return stats
 
 

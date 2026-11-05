@@ -279,18 +279,31 @@ class Huffman:
         #    cursor to the root. If it is not, keep reading bits.
         #  - Never look ahead: the code is prefix-free, so the first leaf you
         #    reach is the symbol.
+        # Guard: without a tree there is nothing to walk. raise stops the method
+        # here, so the single return at the bottom is never reached on error.
         if self.__huffman_root is None:
             raise ValueError(self._NO_TREE_ERROR)
+        # Decoded characters are collected in a list and joined once at the end.
         symbols: list[str] = []
+        # The cursor marks where we are in the tree; every symbol starts at the root.
         cursor: Node = self.__huffman_root
+        # Read the bit string one bit at a time, left to right.
         for bit in encoded_message:
             if bit == self._LEFT:
+                # A "0": take the left edge. ("# type: ignore" tells the type
+                # checker that this child exists, as in __derive_codes.)
                 cursor = cursor.get_left()  # type: ignore
             else:
+                # Otherwise a "1": take the right edge.
                 cursor = cursor.get_right()  # type: ignore
+            # Landing on a leaf means a complete code has been read. Because
+            # no code is a prefix of another, there is no need to look ahead.
             if cursor.is_leaf():
+                # The leaf's symbol is the next character of the message.
                 symbols.append(cursor.get_symbol())  # type: ignore
+                # Go back to the root to start reading the next code.
                 cursor = self.__huffman_root
+        # Glue the characters together with nothing in between.
         result: str = "".join(symbols)
         return result
 
@@ -309,18 +322,29 @@ class Huffman:
         #  - Visit every node once. Add 1 for each, and 8 more when the node
         #    is a leaf. For a tree with n leaves, how many nodes are there in
         #    total? Use that to check your answer.
+        # Guard: no tree, no size. raise leaves the method before the return.
         if self.__huffman_root is None:
             raise ValueError(self._NO_TREE_ERROR)
+        # Running total of bits.
         total: int = 0
+        # Nodes still to visit; the walk starts at the root.
         stack: list[Node] = [self.__huffman_root]
+        # Keep going until every node has been visited.
         while stack:
+            # Take the most recently added node (last in, first out).
             node: Node = stack.pop()
+            # Every node, leaf or internal, costs one bit.
             total = total + NODE_BITS
             if node.is_leaf():
+                # A leaf also carries its 8-bit ASCII symbol.
                 total = total + SYMBOL_BITS
             else:
+                # An internal node has two children still to be visited. The
+                # order does not matter here: we only add up costs.
                 stack.append(node.get_left())  # type: ignore
                 stack.append(node.get_right())  # type: ignore
+        # Check: n leaves means 2n - 1 nodes, so the answer is
+        # (2n - 1) * NODE_BITS + n * SYMBOL_BITS.
         result: int = total
         return result
 
@@ -339,18 +363,25 @@ def measure_compression(message: str) -> dict[str, int]:
     #  - ASCII costs 8 bits for every character of the message, repeats
     #    included.
     #  - Fill in a result dictionary and return it once, at the end.
+    # A fresh object, so no earlier tree or counts can leak into this measurement.
     huffman = Huffman()
+    # encode() returns a string of "0" and "1" characters; its length is the bit count.
     message_bits: int = len(huffman.encode(message))
+    # The tree must be sent too, or the receiver could not decode anything.
+    # (This works only after encode(), which is what builds the tree.)
     tree_bits: int = huffman.tree_size_in_bits()
     result: dict[str, int] = {
+        # Plain ASCII: 8 bits for every character, repeats included.
         "ascii_bits": ASCII_BITS * len(message),
         "message_bits": message_bits,
         "tree_bits": tree_bits,
+        # The honest cost of Huffman: message plus tree.
         "total_bits": message_bits + tree_bits,
     }
     return result
 
 
+# Runs only when this file is executed directly, not when it is imported.
 if __name__ == "__main__":
     # Round-trip check on the example from class: whatever encode() produces,
     # decode() must turn back into the original message. Expected: True
