@@ -261,23 +261,23 @@ def simulate(num_doctors: int, arrival_prob: float, minutes: int,
             else:
                 waiting_heap.add((tier, minute))
 
-    # once we have everything confirmed, update the stats
-    current_waiting = len(waiting_heap)
-    stats["room"]["waiting_sum"] += current_waiting
+        # once we have everything confirmed, update the stats
+        current_waiting = len(waiting_heap)
+        stats["room"]["waiting_sum"] += current_waiting
 
-    # verify the peak amount of people waiting is less that currently waiting
-    if current_waiting > stats["room"]["peak_waiting"]:
-        # if it is, then update it to show current waiting is the peak
-        stats["room"]["peak_waiting"] = current_waiting
-        # if first full minute is still blank and we've gone over capacity,
-        # then it's the first time we've gone over capacity; fill it in
-        if stats["room"]["first_full_minute"] is None and current_waiting >= capacity:
-            stats["room"]["first_full_minute"] = minute
+        # verify the peak amount of people waiting is less that currently waiting
+        if current_waiting > stats["room"]["peak_waiting"]:
+            # if it is, then update it to show current waiting is the peak
+            stats["room"]["peak_waiting"] = current_waiting
+            # if first full minute is still blank and we've gone over capacity,
+            # then it's the first time we've gone over capacity; fill it in
+            if stats["room"]["first_full_minute"] is None and current_waiting >= capacity:
+                stats["room"]["first_full_minute"] = minute
 
-    # mark off the amount of doctors that are currently busy
-    busy_doctors = sum(1 for free_time in doctor_free_time if free_time > minute)
-    # add it to the stats
-    stats["room"]["busy_sum"] += busy_doctors
+        # mark off the amount of doctors that are currently busy
+        busy_doctors = sum(1 for free_time in doctor_free_time if free_time > minute)
+        # add it to the stats
+        stats["room"]["busy_sum"] += busy_doctors
 
     # now we need to count the patients that are still waiting at the end of the simulation
     while len(waiting_heap) > 0:
