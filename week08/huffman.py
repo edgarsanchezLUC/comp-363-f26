@@ -385,9 +385,33 @@ if __name__ == "__main__":
         print("Ulysses Metrics:", metrics)
 
         percentage = (metrics["ascii_bits"] / metrics["message_bits"]) * 100
-        print(f"Total size is {percentage:.2f}% of original ASCII size.")
+        print(f"Total size is {percentage:.2f}% of original ASCII size.\n")
     except FileNotFoundError:
-        print("File not found.")
+        print("File not found.\n")
+
+    encoded1 = huffman.encode("the brightest minds are often plagued by intense self-doubt, overthinking, and isolation.")
+    print("testing 89 characters...")
+    print(measure_compression(huffman.decode(encoded1)), "\n")
+
+    encoded2 = huffman.encode("The ultimate measure of a man is not where he stands in moments of comfort and convenience, but where he stands at times of challenge and controversy.")
+    print("testing 150 characters...")
+    print(measure_compression(huffman.decode(encoded2)), "\n")
+
+    encoded3 = huffman.encode("The eggs are really expensive right now. Aww man, I hope the milk isn't too expensive either. I wonder how much gas will cost today. I hope I don't have to get a second job. I'll pray to God for it andd hopefully he comes through!")
+    print("testing 230 characters...")
+    print(measure_compression(huffman.decode(encoded3)), "\n")
+
+    encoded4 = huffman.encode("Hello, I'm taking COMP363, COMP313, and COMP330!!!")
+    print("testing 50 characters...")
+    print(measure_compression(huffman.decode(encoded4)), "\n")
+
+    encoded5 = huffman.encode("I learn so much in this class, It is really helpful for me!")
+    print("testing 59 characters...")
+    print(measure_compression(huffman.decode(encoded5)), "\n")
+
+    encoded6 = huffman.encode("I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I")
+    print("testing 147 of the same two characters...")
+    print(measure_compression(huffman.decode(encoded6)), "\n")
 
     # Your own experiments go here: read a plain-text book from Project
     # Gutenberg, compress it, and call measure_compression.
@@ -421,7 +445,10 @@ total beats ASCII? What would have to be true of a message for the tree to
 cost almost nothing?
 
 """
- #
+ # Following the numbers provided by my own tests, it seems that somewhere
+ # between 50-60 characters is where total bits begin to be less than the
+ # total ascii bits. In order for a message to cost almost nothing, it would
+ # have to be the same character repeated.
 """
 4. **Two ways to measure a tree.** The package
 [`pympler`](https://pympler.readthedocs.io/en/latest/) measures the memory
