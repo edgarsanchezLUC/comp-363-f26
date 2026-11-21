@@ -369,12 +369,16 @@ def measure_compression(message: str) -> dict[str, int]:
 
 
 if __name__ == "__main__":
+    from pympler import asizeof
     # Round-trip check on the example from class: whatever encode() produces,
     # decode() must turn back into the original message. Expected: True
     huffman = Huffman()
     encoded = huffman.encode("hello world")
     print(huffman.decode(encoded) == "hello world")
     print(measure_compression("hello world\n"))
+    asizeof_bits = asizeof.asizeof(huffman.get_root()) * 8
+    print(f"hello world tree_size_in_bits(): {huffman.tree_size_in_bits()}")
+    print(f"hello world pympler asizeof (bits): {asizeof_bits}")
     try:
         with open("Ulysses.txt", encoding="utf-8") as f:
             raw_message = f.read()
@@ -412,6 +416,23 @@ if __name__ == "__main__":
     encoded6 = huffman.encode("I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I I")
     print("testing 147 of the same two characters...")
     print(measure_compression(huffman.decode(encoded6)), "\n")
+
+    msg_test = "ab cd ef gh"
+    h_forward = Huffman()
+    h_backward = Huffman()
+
+    encrypted_forward = h_forward.encode(msg_test)
+    encrypted_backward = h_backward.encode(msg_test[::-1])
+
+    codes_forward = h_forward.get_codes()
+    codes_backward = h_backward.get_codes()
+
+    print("Original:", repr(msg_test), "-> encoded length:", len(encrypted_forward))
+    print("Backward:", repr(msg_test[::-1]), "-> encoded length:", len(encrypted_backward))
+    print("Forward codes: ", codes_forward)
+    print("Backward codes: ", codes_backward)
+    print("Code lengths match per symbol?", {k: (len(codes_forward[k]), len(codes_backward[k])) for k in codes_forward})
+
 
     # Your own experiments go here: read a plain-text book from Project
     # Gutenberg, compress it, and call measure_compression.
@@ -458,8 +479,17 @@ an object occupies in Python: `from pympler import asizeof`, then
 Report that number, in bits, next to `tree_size_in_bits()` for the same
     tree and explain in a sentence or two why they differ so much and which one
 the receiver cares about.
+"""
+# for hello world, the tree size is 79 bits whereas using asizeof, we get
+# a size of 26560 bits. They differ so much because asizeof measures everything
+# while tree size counts only the bit stream. The receiver ends up caring
+# more about the tree size in bits than asizeof.
+
+"""
 5. **Ties.** When two trees tie for least frequent, does it matter which one
 you merge first? Does it change the code lengths, the encoded message's
 total length, or only which symbols get which codes? Run the experiment:
 encode a message, then the same message reversed, and compare. """
 
+# It does matter, merging it in different orders will give it (symbols)
+# different codes. It will not change the total length.
